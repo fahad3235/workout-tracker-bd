@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workout Tracker BD - Offline Bilingual Workout Log</title>
+<meta name="description" content="Offline bilingual (English / Bengali) workout log. Your data stays in this browser.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div>
+      <h1 data-i18n="appTitle">Workout Tracker BD</h1>
+      <p class="tagline" data-i18n="tagline">Log workouts offline. Your data stays on this device.</p>
+    </div>
+    <button id="langBtn" class="btn btn-lang" type="button" aria-label="Switch language">Bangla</button>
+  </div>
+</header>
+
+<nav class="tabs wrap" role="tablist" aria-label="Sections">
+  <button class="tab active" data-tab="dashboard" role="tab" aria-selected="true" type="button" data-i18n="navDashboard">Dashboard</button>
+  <button class="tab" data-tab="log" role="tab" aria-selected="false" type="button" data-i18n="navLog">Log Workout</button>
+  <button class="tab" data-tab="routines" role="tab" aria-selected="false" type="button" data-i18n="navRoutines">Routines</button>
+  <button class="tab" data-tab="history" role="tab" aria-selected="false" type="button" data-i18n="navHistory">History</button>
+  <button class="tab" data-tab="data" role="tab" aria-selected="false" type="button" data-i18n="navData">Data</button>
+</nav>
+
+<main class="wrap">
+  <!-- DASHBOARD -->
+  <section id="panel-dashboard" class="panel active" aria-label="Dashboard">
+    <h2 data-i18n="dashboardTitle">Dashboard</h2>
+    <div class="stats">
+      <div class="stat"><span class="stat-label" data-i18n="totalWorkouts">Total workout days</span><span class="stat-value" id="statWorkouts">0</span></div>
+      <div class="stat"><span class="stat-label" data-i18n="totalEntries">Total entries</span><span class="stat-value" id="statEntries">0</span></div>
+      <div class="stat"><span class="stat-label" data-i18n="totalVolume">Total volume</span><span class="stat-value" id="statVolume">0</span><span class="stat-unit" data-i18n="kgUnit">kg</span></div>
+      <div class="stat"><span class="stat-label" data-i18n="weekVolume">This week volume</span><span class="stat-value" id="statWeek">0</span><span class="stat-unit" data-i18n="kgUnit">kg</span></div>
+      <div class="stat"><span class="stat-label" data-i18n="streak">Current streak</span><span class="stat-value" id="statStreak">0</span><span class="stat-unit" data-i18n="daysUnit">days</span></div>
+    </div>
+    <p class="hint" data-i18n="streakHint">Streak counts consecutive days with at least one entry. Missing today still counts if yesterday was logged.</p>
+    <h3 data-i18n="chartTitle">7-day volume (kg)</h3>
+    <div id="chart" class="chart" role="img" aria-label="7-day volume bar chart"></div>
+    <h3 data-i18n="prTitle">Personal records</h3>
+    <div id="prTableWrap"></div>
+    <p id="prEmpty" class="empty" data-i18n="prEmpty">No personal records yet. Log a workout to start.</p>
+  </section>
+
+  <!-- LOG -->
+  <section id="panel-log" class="panel" aria-label="Log workout">
+    <h2 data-i18n="logTitle">Log a workout</h2>
+    <form id="entryForm" novalidate>
+      <div class="field">
+        <label for="entryDate" data-i18n="dateLabel">Date</label>
+        <input id="entryDate" type="date" required>
+      </div>
+      <div class="field">
+        <label for="entryExercise" data-i18n="exerciseLabel">Exercise</label>
+        <input id="entryExercise" type="text" list="exerciseList" maxlength="60" required autocomplete="off" placeholder="Bench Press or your own">
+        <datalist id="exerciseList"></datalist>
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label for="entrySets" data-i18n="setsLabel">Sets (1-20)</label>
+          <input id="entrySets" type="number" inputmode="numeric" min="1" max="20" step="1" value="3" required>
+        </div>
+        <div class="field">
+          <label for="entryReps" data-i18n="repsLabel">Reps per set (1-200)</label>
+          <input id="entryReps" type="number" inputmode="numeric" min="1" max="200" step="1" value="10" required>
+        </div>
+        <div class="field">
+          <label for="entryWeight" data-i18n="weightLabel">Weight kg (0-500, 0 = bodyweight)</label>
+          <input id="entryWeight" type="number" inputmode="decimal" min="0" max="500" step="0.5" value="0" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="entryNote" data-i18n="noteLabel">Note (optional, max 200 chars)</label>
+        <input id="entryNote" type="text" maxlength="200" placeholder="Felt strong, slow last set">
+      </div>
+      <p id="entryErrors" class="errors" role="alert" hidden></p>
+      <p id="entryOk" class="okmsg" role="status" hidden></p>
+      <button class="btn btn-primary" type="submit" data-i18n="addBtn">Add entry</button>
+    </form>
+    <h3 data-i18n="recentTitle">Recent entries</h3>
+    <div id="recentWrap"></div>
+    <p id="recentEmpty" class="empty" data-i18n="recentEmpty">No entries yet.</p>
+  </section>
+
+  <!-- ROUTINES -->
+  <section id="panel-routines" class="panel" aria-label="Routines">
+    <h2 data-i18n="routinesTitle">Routines</h2>
+    <p class="hint" data-i18n="routineHint">Build a routine once, then Start it to log one entry per exercise for today.</p>
+    <form id="routineForm" novalidate>
+      <div class="field">
+        <label for="routineName" data-i18n="routineNameLabel">Routine name</label>
+        <input id="routineName" type="text" maxlength="60" required placeholder="Push Day">
+      </div>
+      <div id="routineRows"></div>
+      <button id="routineAddRow" class="btn" type="button" data-i18n="addExerciseBtn">+ Add exercise</button>
+      <p id="routineErrors" class="errors" role="alert" hidden></p>
+      <p id="routineOk" class="okmsg" role="status" hidden></p>
+      <button class="btn btn-primary" type="submit" data-i18n="createRoutineBtn">Create routine</button>
+    </form>
+    <h3 data-i18n="savedRoutinesTitle">Saved routines</h3>
+    <div id="routineList"></div>
+    <p id="routineEmpty" class="empty" data-i18n="routineEmpty">No routines yet. Create one above.</p>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="panel-history" class="panel" aria-label="History">
+    <h2 data-i18n="historyTitle">History</h2>
+    <form id="filterForm" class="filters" novalidate>
+      <div class="field">
+        <label for="filterExercise" data-i18n="filterExerciseLabel">Exercise</label>
+        <input id="filterExercise" type="text" list="exerciseList" autocomplete="off" placeholder="All exercises">
+      </div>
+      <div class="field">
+        <label for="filterFrom" data-i18n="filterFromLabel">From</label>
+        <input id="filterFrom" type="date">
+      </div>
+      <div class="field">
+        <label for="filterTo" data-i18n="filterToLabel">To</label>
+        <input id="filterTo" type="date">
+      </div>
+      <div class="field field-btns">
+        <button class="btn btn-primary" type="submit" data-i18n="applyBtn">Apply</button>
+        <button id="filterClear" class="btn" type="button" data-i18n="clearBtn">Clear</button>
+      </div>
+    </form>
+    <div id="historyWrap"></div>
+    <p id="historyEmpty" class="empty" data-i18n="historyEmpty">No entries match the current filter.</p>
+    <h3 data-i18n="chartTitle">7-day volume (kg)</h3>
+    <div id="historyChart" class="chart" role="img" aria-label="7-day volume bar chart"></div>
+  </section>
+
+  <!-- DATA -->
+  <section id="panel-data" class="panel" aria-label="Data">
+    <h2 data-i18n="dataTitle">Data</h2>
+    <p class="hint" data-i18n="dataHint">Everything lives in this browser (localStorage). Export a backup any time.</p>
+    <div class="data-block">
+      <h3 data-i18n="exportTitle">Export</h3>
+      <button id="exportBtn" class="btn btn-primary" type="button" data-i18n="exportBtn">Download JSON backup</button>
+      <p id="exportMsg" class="okmsg" role="status" hidden></p>
+    </div>
+    <div class="data-block">
+      <h3 data-i18n="importTitle">Import</h3>
+      <p class="hint" data-i18n="importHint">Strict validation: wrong app, wrong version, bad types, out-of-range values, duplicate ids, and future dates are all rejected and your current data is left untouched.</p>
+      <div class="field">
+        <label for="importFile" data-i18n="importFileLabel">Choose a JSON backup file</label>
+        <input id="importFile" type="file" accept=".json,application/json">
+      </div>
+      <div class="field">
+        <label for="importText" data-i18n="importTextLabel">Or paste JSON here</label>
+        <textarea id="importText" rows="6" placeholder='{"app":"workout-tracker-bd","version":1,...}'></textarea>
+      </div>
+      <button id="importBtn" class="btn btn-primary" type="button" data-i18n="importBtn">Import JSON</button>
+      <p id="importMsg" class="errors" role="alert" hidden></p>
+      <p id="importOk" class="okmsg" role="status" hidden></p>
+    </div>
+    <div class="data-block danger">
+      <h3 data-i18n="eraseTitle">Erase everything</h3>
+      <p class="hint" data-i18n="eraseHint">Type DELETE in the box to enable the erase button. This deletes all entries and routines and cannot be undone.</p>
+      <div class="field">
+        <label for="eraseInput" data-i18n="eraseInputLabel">Type DELETE to confirm</label>
+        <input id="eraseInput" type="text" autocomplete="off" placeholder="DELETE">
+      </div>
+      <button id="eraseBtn" class="btn btn-danger" type="button" disabled data-i18n="eraseBtn">Erase all data</button>
+      <p id="eraseMsg" class="okmsg" role="status" hidden></p>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap footer">
+  <p data-i18n="disclaimer">Personal tracker only. Not medical advice. Data is stored only in this browser (localStorage) and starts empty; nothing is uploaded anywhere.</p>
+  <p data-i18n="footerNote">Volume = sets x reps x weight (kg). Weight 0 means bodyweight.</p>
+</footer>
+
+<script src="js/logic.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
